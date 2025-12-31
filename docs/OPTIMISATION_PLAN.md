@@ -6,7 +6,7 @@
 
 ---
 
-## Executive Summary
+## Executive summary
 
 This system is already well-configured for server use with `serverperfmode=1` enabled and reasonable kernel tuning. The optimisation plan focuses on:
 1. Disabling consumer-oriented services that consume resources
@@ -16,9 +16,9 @@ This system is already well-configured for server use with `serverperfmode=1` en
 
 ---
 
-## 3.1 Services to Disable
+## 3.1 Services to disable
 
-### TIER 1: TELEMETRY/ANALYTICS (Minimal Risk)
+### Tier 1: Telemetry/analytics (minimal risk)
 
 | Service | Daemon/Agent Path | Risk | Category | Reversal Method |
 |---------|-------------------|------|----------|-----------------|
@@ -32,7 +32,7 @@ This system is already well-configured for server use with `serverperfmode=1` en
 | dprivacyd | system/com.apple.dprivacyd | 1/5 | Telemetry | `sudo launchctl enable system/com.apple.dprivacyd` |
 | appleseed.fbahelperd | system/com.apple.appleseed.fbahelperd | 1/5 | Telemetry | `sudo launchctl enable system/com.apple.appleseed.fbahelperd` |
 
-### TIER 2: SIRI/ASSISTANT (Low Risk)
+### Tier 2: Siri/assistant (low risk)
 
 | Service | Daemon/Agent Path | Risk | Category | Reversal Method |
 |---------|-------------------|------|----------|-----------------|
@@ -47,7 +47,7 @@ This system is already well-configured for server use with `serverperfmode=1` en
 | siriactionsd | gui/$UID/com.apple.siriactionsd | 1/5 | Consumer | `launchctl enable gui/$UID/com.apple.siriactionsd` |
 | corespeechd | gui/$UID/com.apple.corespeechd | 1/5 | Consumer | `launchctl enable gui/$UID/com.apple.corespeechd` |
 
-### TIER 3: PHOTO/MEDIA ANALYSIS (Low Risk - High CPU Savings)
+### Tier 3: Photo/media analysis (low risk - high CPU savings)
 
 | Service | Daemon/Agent Path | Risk | Category | Reversal Method |
 |---------|-------------------|------|----------|-----------------|
@@ -59,7 +59,7 @@ This system is already well-configured for server use with `serverperfmode=1` en
 | suggestd | gui/$UID/com.apple.suggestd | 1/5 | Analysis | `launchctl enable gui/$UID/com.apple.suggestd` |
 | proactived | gui/$UID/com.apple.proactived | 1/5 | Analysis | `launchctl enable gui/$UID/com.apple.proactived` |
 
-### TIER 4: CONSUMER FEATURES (Low Risk)
+### Tier 4: Consumer features (low risk)
 
 | Service | Daemon/Agent Path | Risk | Category | Reversal Method |
 |---------|-------------------|------|----------|-----------------|
@@ -79,7 +79,7 @@ This system is already well-configured for server use with `serverperfmode=1` en
 | watchlistd | gui/$UID/com.apple.watchlistd | 1/5 | Consumer | `launchctl enable gui/$UID/com.apple.watchlistd` |
 | shazamd | gui/$UID/com.apple.shazamd | 1/5 | Consumer | `launchctl enable gui/$UID/com.apple.shazamd` |
 
-### TIER 5: MEDIA/AIRPLAY (Low Risk for Servers)
+### Tier 5: Media/AirPlay (low risk for servers)
 
 | Service | Daemon/Agent Path | Risk | Category | Reversal Method |
 |---------|-------------------|------|----------|-----------------|
@@ -93,7 +93,7 @@ This system is already well-configured for server use with `serverperfmode=1` en
 | mediastream.mstreamd | gui/$UID/com.apple.mediastream.mstreamd | 1/5 | Media | `launchctl enable gui/$UID/com.apple.mediastream.mstreamd` |
 | rcd | gui/$UID/com.apple.rcd | 1/5 | Media | `launchctl enable gui/$UID/com.apple.rcd` |
 
-### TIER 6: SHARING/HANDOFF (Moderate Risk)
+### Tier 6: Sharing/handoff (moderate risk)
 
 | Service | Daemon/Agent Path | Risk | Category | Reversal Method |
 |---------|-------------------|------|----------|-----------------|
@@ -103,9 +103,9 @@ This system is already well-configured for server use with `serverperfmode=1` en
 
 ---
 
-## 3.2 System Settings to Modify
+## 3.2 System settings to modify
 
-### Power Management (pmset)
+### Power management (pmset)
 
 | Setting | Current Value | New Value | Purpose | Reversal Command |
 |---------|---------------|-----------|---------|------------------|
@@ -118,7 +118,7 @@ This system is already well-configured for server use with `serverperfmode=1` en
 | standbydelaylow | 0 | 0 | Already disabled | N/A |
 | autopoweroff | - | 0 | Disable auto power off | `sudo pmset -a autopoweroff 1` |
 
-### defaults write Settings
+### defaults write settings
 
 | Domain | Key | Current | New Value | Purpose | Reversal Command |
 |--------|-----|---------|-----------|---------|------------------|
@@ -135,18 +135,20 @@ This system is already well-configured for server use with `serverperfmode=1` en
 
 ---
 
-## 3.3 Performance Tuning
+## 3.3 Performance tuning
 
-### sysctl Optimisations (Network Stack)
+### sysctl optimisations (network stack)
 
-| Parameter | Current | Recommended | Purpose |
+Default values verified on macOS Sequoia 15.6 per [Rolande's tuning guide](https://rolande.wordpress.com/2025/08/07/performance-tuning-the-network-stack-on-macos-sequoia-15-6/).
+
+| Parameter | Default | Recommended | Purpose |
 |-----------|---------|-------------|---------|
 | net.inet.tcp.mssdflt | 512 | 1460 | Modern MSS for better throughput |
 | net.inet.tcp.win_scale_factor | 3 | 8 | Higher window scaling for fast networks |
-| net.inet.tcp.sendspace | 131072 | 1048576 | Larger send buffer (1MB) |
-| net.inet.tcp.recvspace | 131072 | 1048576 | Larger receive buffer (1MB) |
-| net.inet.tcp.autorcvbufmax | 2097152 | 33554432 | Max auto recv buffer (32MB) |
-| net.inet.tcp.autosndbufmax | 2097152 | 33554432 | Max auto send buffer (32MB) |
+| net.inet.tcp.sendspace | 131,702 | 1,048,576 | Larger send buffer (1MB) |
+| net.inet.tcp.recvspace | 131,702 | 1,048,576 | Larger receive buffer (1MB) |
+| net.inet.tcp.autorcvbufmax | 4,194,304 | 33,554,432 | Max auto recv buffer (32MB) |
+| net.inet.tcp.autosndbufmax | 4,194,304 | 33,554,432 | Max auto send buffer (32MB) |
 | net.inet.tcp.delayed_ack | 3 | 0 | Disable delayed ACK for lower latency |
 | net.inet.tcp.blackhole | 0 | 2 | Drop RST packets (security) |
 | net.inet.udp.blackhole | 0 | 1 | Drop UDP to closed ports |
@@ -155,7 +157,7 @@ This system is already well-configured for server use with `serverperfmode=1` en
 | net.inet.tcp.always_keepalive | 0 | 1 | Keep connections alive |
 | net.inet.tcp.msl | 15000 | 5000 | Faster TIME_WAIT cleanup |
 
-### Kernel Optimisations (Already well-tuned, verify these persist)
+### Kernel optimisations (already well-tuned, verify these persist)
 
 | Parameter | Current | Recommended | Notes |
 |-----------|---------|-------------|-------|
@@ -167,7 +169,7 @@ This system is already well-configured for server use with `serverperfmode=1` en
 | kern.ipc.somaxconn | 2048 | 2048 | Already optimal |
 | kern.ipc.maxsockbuf | 8388608 | 16777216 | Double to 16MB |
 
-### Spotlight Configuration
+### Spotlight configuration
 
 | Action | Command | Purpose |
 |--------|---------|---------|
@@ -176,9 +178,9 @@ This system is already well-configured for server use with `serverperfmode=1` en
 
 ---
 
-## 3.4 Excluded Optimisations (With Rationale)
+## 3.4 Excluded optimisations (with rationale)
 
-### NOT Implementing - Too Risky
+### NOT implementing - too risky
 
 | Optimisation | Reason for Exclusion |
 |--------------|---------------------|
@@ -194,7 +196,7 @@ This system is already well-configured for server use with `serverperfmode=1` en
 | Disabling cfprefsd | Breaks all preferences - system won't function |
 | Deleting LaunchDaemon plist files | Prefer launchctl disable - reversible and safer |
 
-### NOT Implementing - Already Configured
+### NOT implementing - already configured
 
 | Optimisation | Current State |
 |--------------|---------------|
@@ -206,7 +208,7 @@ This system is already well-configured for server use with `serverperfmode=1` en
 | TCP keepalive | Already enabled |
 | High kernel limits | Already tuned (maxproc=20000, etc.) |
 
-### NOT Implementing - Circumstantial
+### NOT implementing - circumstantial
 
 | Optimisation | Condition for Implementation |
 |--------------|------------------------------|
@@ -217,21 +219,24 @@ This system is already well-configured for server use with `serverperfmode=1` en
 
 ---
 
-## Risk Assessment Summary
+## Risk assessment summary
 
-| Category | Services Count | Risk Level | CPU Impact | Reversibility |
+| Category | Services count | Risk level | CPU impact | Reversibility |
 |----------|----------------|------------|------------|---------------|
-| Telemetry | 9 | Very Low | Low | Full |
-| Siri/Assistant | 10 | Very Low | Medium | Full |
-| Photo/Media Analysis | 7 | Low | HIGH | Full |
-| Consumer Features | 15 | Very Low | Low-Medium | Full |
-| Media/AirPlay | 9 | Very Low | Low | Full |
-| Sharing/Handoff | 3 | Low | Low | Full |
-| **TOTAL** | **53 services** | Low Average | **Significant** | **All Reversible** |
+| Telemetry | 9 | Very low | Low | Full |
+| Siri/assistant | 12 | Very low | Medium | Full |
+| Photo/media analysis | 10 | Low | High | Full |
+| Consumer features | 24 | Very low | Low-medium | Full |
+| Media/AirPlay | 11 | Very low | Low | Full |
+| Sharing/handoff | 6 | Low | Low | Full |
+| iCloud (conditional) | 9 | Moderate | Low | Full |
+| Backup (conditional) | 2 | Moderate | Low | Full |
+| Bluetooth (conditional) | 3 | Low | Low | Full |
+| **Total** | **86 services** | Low average | **Significant** | **All reversible** |
 
 ---
 
-## Implementation Order
+## Implementation order
 
 1. **Backup** - Create full backup of current state
 2. **Telemetry** - Disable analytics/telemetry (safest, immediate privacy benefit)
@@ -240,13 +245,13 @@ This system is already well-configured for server use with `serverperfmode=1` en
 5. **Consumer** - Disable consumer features (Game Center, Screen Time, etc.)
 6. **Media** - Disable media services (AirPlay, Music, etc.)
 7. **Network** - Apply network stack tuning (performance benefit)
-8. **Power** - Finalize power settings (ensures 24/7 operation)
+8. **Power** - Finalise power settings (for 24/7 operation)
 9. **Verify** - Run verification checks
 10. **Document** - Update manifest with what was changed
 
 ---
 
-## Verification Commands
+## Verification commands
 
 After implementation, verify with:
 
@@ -272,7 +277,7 @@ log show --predicate 'eventMessage contains "error"' --last 10m
 
 ---
 
-## Approval Checkpoint
+## Approval checkpoint
 
 **Before proceeding to implementation:**
 
