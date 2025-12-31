@@ -58,13 +58,13 @@
 
 ---
 
-A comprehensive toolkit for transforming macOS Sequoia 15.7.3 into a high-performance server environment for resource-intensive web SaaS applications.
+Bash toolkit for optimising macOS Sequoia 15.7.3 as a high-performance server for resource-intensive web SaaS applications.
 
 ## Overview
 
-This toolkit systematically disables consumer-oriented services, tunes the network stack, and configures power management for 24/7 server operation. All changes are reversible and extensively documented.
+This toolkit disables consumer-oriented services, tunes the network stack, and configures power management for 24/7 server operation. All changes are reversible and documented.
 
-### Key Features
+### Key features
 
 - **86 consumer services** identified for disabling (72 automatic + 14 conditional)
 - **Network stack tuning** for high-throughput server workloads
@@ -78,9 +78,9 @@ This toolkit systematically disables consumer-oriented services, tunes the netwo
 - **Custom configuration** via `--config-dir` option
 - **Lock file protection** against concurrent execution
 
-## System Requirements
+## System requirements
 
-### Supported Configuration
+### Supported configuration
 
 | Requirement | This System | Notes |
 |-------------|-------------|-------|
@@ -98,7 +98,7 @@ This toolkit systematically disables consumer-oriented services, tunes the netwo
 2. **SIP disabled** - For persistent launchctl changes (already disabled on this system)
 3. **Backup strategy** - Ensure important data is backed up before running
 
-## Directory Structure
+## Directory structure
 
 ```
 macos-optimisation-script/
@@ -127,9 +127,9 @@ macos-optimisation-script/
     └── optimisation_*.log
 ```
 
-## Quick Start
+## Quick start
 
-### 1. Preview Changes (Recommended First Step)
+### 1. Preview changes (recommended first step)
 
 ```bash
 ./optimise.sh --dry-run --verbose
@@ -137,7 +137,7 @@ macos-optimisation-script/
 
 This shows all changes that would be made without actually applying them.
 
-### 2. Run Full Optimisation
+### 2. Run full optimisation
 
 ```bash
 ./optimise.sh --verbose
@@ -151,7 +151,7 @@ The script will:
 5. Apply optimisations
 6. Show summary and offer to restart
 
-### 3. Selective Optimisation
+### 3. Selective optimisation
 
 Apply only specific categories:
 
@@ -163,7 +163,7 @@ Apply only specific categories:
 ./optimise.sh --category=consumer,media --yes
 ```
 
-## Available Categories
+## Available categories
 
 | Category | Description | Risk Level |
 |----------|-------------|------------|
@@ -181,7 +181,7 @@ Apply only specific categories:
 | `defaults` | macOS preferences (updates, animations, etc.) | Very Low |
 | `spotlight` | Spotlight indexing (interactive prompt) | Low |
 
-## Command Reference
+## Command reference
 
 ### backup_settings.sh
 
@@ -254,15 +254,15 @@ Examples:
   ./restore.sh 2025-12-31_143022 --accept-disclaimer --yes  # Automation mode
 ```
 
-## What Gets Optimised
+## What gets optimised
 
-### Services Disabled (86 total)
+### Services disabled (86 total)
 
 Services are organised into categories per `config/services.conf`:
 - **Automatic (72):** telemetry (9), siri (12), analysis (10), consumer (24), media (11), sharing (6)
 - **Conditional (14):** icloud (9), backup (2), bluetooth (3) — prompted interactively
 
-#### Telemetry & Analytics (9 services)
+#### Telemetry and analytics (9 services)
 - `analyticsd` - Apple analytics daemon
 - `awdd` - Apple wireless diagnostics
 - `SubmitDiagInfo` - Diagnostic submission
@@ -273,16 +273,16 @@ Services are organised into categories per `config/services.conf`:
 - `dprivacyd` - Differential privacy
 - `appleseed.fbahelperd` - Feedback Assistant
 
-#### Siri & Assistant (12 services)
+#### Siri and assistant (12 services)
 All Siri-related services including `assistantd`, `parsecd`, `siriknowledged`, etc.
 
-#### Photo/Media Analysis (10 services)
+#### Photo/media analysis (10 services)
 High CPU consumers: `photoanalysisd`, `mediaanalysisd`, `knowledgeconstructiond`, etc.
 
-#### Consumer Features (22+ services)
+#### Consumer features (22+ services)
 `gamed`, `ScreenTimeAgent`, `tipsd`, `newsd`, `weatherd`, `Maps.*`, etc.
 
-### Network Stack Tuning
+### Network stack tuning
 
 Based on [ESnet Host Tuning](https://fasterdata.es.net/host-tuning/osx/) and [Rolande's macOS Sequoia 15.6 tuning](https://rolande.wordpress.com/2025/08/07/performance-tuning-the-network-stack-on-macos-sequoia-15-6/):
 
@@ -298,7 +298,7 @@ Based on [ESnet Host Tuning](https://fasterdata.es.net/host-tuning/osx/) and [Ro
 
 > **Note:** `net.inet.tcp.rfc1323` was removed in El Capitan 10.11 ([Apple Community](https://discussions.apple.com/thread/7408993)). RFC 1323 timestamps and window scaling are now enabled by default and not user-configurable.
 
-### Power Management
+### Power management
 
 - Power Nap: Disabled
 - Proximity Wake: Disabled
@@ -307,7 +307,7 @@ Based on [ESnet Host Tuning](https://fasterdata.es.net/host-tuning/osx/) and [Ro
 - Wake on LAN: Enabled
 - TCP Keepalive: Enabled
 
-### macOS Preferences
+### macOS preferences
 
 - Crash dialogs: Disabled
 - Auto updates: Disabled
@@ -315,7 +315,7 @@ Based on [ESnet Host Tuning](https://fasterdata.es.net/host-tuning/osx/) and [Ro
 - Animations: Reduced
 - .DS_Store on network: Disabled
 
-## Services NEVER Modified
+## Services never modified
 
 The following critical services are protected and never touched:
 
@@ -332,7 +332,7 @@ The following critical services are protected and never touched:
 | cfprefsd | Preferences system | System critical |
 | nsurlsessiond | URL handling - respawns if killed | [MacPaw](https://macpaw.com/how-to/remove-nsurlsessiond-from-mac) |
 
-## Verifying Optimisations
+## Verifying optimisations
 
 After optimisation, verify with these commands:
 
@@ -358,7 +358,7 @@ tail -50 logs/optimisation_*.log
 
 ## Troubleshooting
 
-### Service Won't Disable
+### Service won't disable
 
 ```
 Bootstrap failed: 5: Input/output error
@@ -368,7 +368,7 @@ This usually means:
 1. SIP is enabled - Boot to Recovery and run `csrutil disable`
 2. Service is already disabled - Run `launchctl print-disabled system` to check
 
-### Network Settings Don't Persist
+### Network settings don't persist
 
 Network settings are applied at boot via a LaunchDaemon. Check:
 
@@ -377,13 +377,13 @@ ls -la /Library/LaunchDaemons/com.server.sysctl.plist
 sudo launchctl list | grep sysctl
 ```
 
-### Restore Not Working
+### Restore not working
 
 1. List available backups: `./restore.sh --list`
 2. Check backup integrity: `cat backups/*/manifest.json`
 3. Try dry-run first: `./restore.sh TIMESTAMP --dry-run`
 
-### Something Broke After Optimisation
+### Something broke after optimisation
 
 1. **Quick Recovery**: Restore from backup
    ```bash
@@ -406,9 +406,9 @@ sudo launchctl list | grep sysctl
    done
    ```
 
-## Known Limitations
+## Known limitations
 
-### Platform Restrictions
+### Platform restrictions
 
 | Limitation | Details | Source |
 |------------|---------|--------|
@@ -417,7 +417,7 @@ sudo launchctl list | grep sysctl
 | **Apple Silicon** | Apple Silicon Macs cannot use serverperfmode; service disabling still works but Apple Intelligence features require M1+ | [Apple Support](https://support.apple.com/en-us/120282) |
 | **Intel macOS Future** | macOS Tahoe 26 (Fall 2025) will be the last version supporting Intel Macs | [Wikipedia](https://en.wikipedia.org/wiki/MacOS_Sequoia) |
 
-### SIP (System Integrity Protection) Requirements
+### SIP (System Integrity Protection) requirements
 
 Per [Apple Developer Documentation](https://developer.apple.com/documentation/security/disabling-and-enabling-system-integrity-protection):
 
@@ -432,7 +432,7 @@ Per [Apple Developer Documentation](https://developer.apple.com/documentation/se
 
 > **Security Warning:** Disabling SIP removes a critical security layer. Apple states: "Disable system protections only temporarily during development." With SIP disabled, malicious software could modify protected system files. Consider re-enabling SIP after applying changes, though this will prevent the changes from persisting across reboots.
 
-### Technical Limitations
+### Technical limitations
 
 1. **Restart Required**: Service disable/enable changes require logout or restart to take full effect
 2. **GUI Required**: WindowServer must remain running for remote management access (Screen Sharing, ARD)
@@ -440,7 +440,7 @@ Per [Apple Developer Documentation](https://developer.apple.com/documentation/se
 4. **Service Dependencies**: Disabling one service may affect others; e.g., disabling `mDNSResponder` breaks all networking ([HowToGeek](https://www.howtogeek.com/338914/what-is-mdnsresponder-and-why-is-it-running-on-my-mac/))
 5. **NVRAM Reset**: If NVRAM is reset, `serverperfmode` setting is cleared and must be re-applied
 
-## Known Issues
+## Known issues
 
 | Issue | Description | Workaround |
 |-------|-------------|------------|
@@ -448,9 +448,9 @@ Per [Apple Developer Documentation](https://developer.apple.com/documentation/se
 | TCP buffer defaults | Earlier documentation cited incorrect default values | Corrected to verified Sequoia 15.6 values |
 | Some services may not exist | Not all listed services exist on all macOS installations | Script checks existence before attempting disable |
 
-## Acknowledgements & Documentation Gaps
+## Acknowledgements and documentation gaps
 
-### Verified Against Authoritative Sources
+### Verified against authoritative sources
 
 | Topic | Verification Status | Primary Source |
 |-------|---------------------|----------------|
@@ -465,7 +465,7 @@ Per [Apple Developer Documentation](https://developer.apple.com/documentation/se
 | NO_COLOR standard | ✅ Verified | [no-color.org](https://no-color.org/) |
 | TCP blackhole settings | ✅ Verified | [FreeBSD man blackhole](https://man.freebsd.org/cgi/man.cgi?query=blackhole), [Apple Support Stealth Mode](https://support.apple.com/en-lb/guide/mac-help/mh17133/mac) |
 
-### Unverified / Best-Effort Documentation
+### Unverified / best-effort documentation
 
 The following items lack official Apple documentation and are based on community research, XNU kernel source analysis, or empirical testing:
 
@@ -477,7 +477,7 @@ The following items lack official Apple documentation and are based on community
 | Service interdependencies | ⚠️ Empirical | No comprehensive dependency map exists; based on testing and community reports |
 | Optimal TCP buffer sizes | ⚠️ Workload-dependent | Values from [ESnet](https://fasterdata.es.net/host-tuning/osx/) are recommendations, not guarantees |
 
-### `net.inet.tcp.delayed_ack` Values (XNU Source Analysis)
+### `net.inet.tcp.delayed_ack` values (XNU source analysis)
 
 Based on analysis of [XNU kernel source](https://github.com/apple/darwin-xnu/blob/main/bsd/netinet/tcp_input.c):
 
@@ -488,7 +488,7 @@ Based on analysis of [XNU kernel source](https://github.com/apple/darwin-xnu/blo
 | 2 | More restrictive — honours PUSH flag | Compatibility mode |
 | 3 | Auto-detect / "Stretch ACKs" (default) | macOS default; adapts based on connection characteristics |
 
-## Transparency Statement
+## Transparency statement
 
 This toolkit was developed for a specific use case (high-performance web SaaS server on Mac mini 8,1) and may not be suitable for all environments. The authors have made best efforts to:
 
@@ -523,35 +523,35 @@ This toolkit was developed for a specific use case (high-performance web SaaS se
 
 ### v1.0.0 (2025-12-31)
 - Initial release
-- 53 services identified for safe disabling
+- 86 services identified for disabling (72 automatic + 14 conditional)
 - Full backup/restore capability
 - Network stack tuning
 - Power management configuration
 - Interactive prompts for conditional services
 
-## Authoritative References
+## Authoritative references
 
-### Official Apple Documentation
+### Official Apple documentation
 - [Turn on performance mode for macOS Server](https://support.apple.com/en-us/101992) - serverperfmode (Intel-only)
 - [Edit property lists in Terminal](https://support.apple.com/guide/terminal/edit-property-lists-apda49a1bb2-577e-4721-8f25-ffc0836f6997/mac) - defaults command
 - [configd man page](https://support.apple.com/en-gb/102685) - Network configuration daemon
 
-### Man Pages & System Documentation
+### Man pages and system documentation
 - `man launchctl` - Service management ([SS64 reference](https://ss64.com/mac/launchctl.html))
 - `man pmset` - Power management ([SS64 reference](https://ss64.com/mac/pmset.html))
 - `man sysctl` - Kernel parameters ([Apple Developer Archive](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/sysctl.3.html))
 
-### Network Tuning Sources
+### Network tuning sources
 - [ESnet Host Tuning - macOS](https://fasterdata.es.net/host-tuning/osx/) - High-performance networking
 - [Rolande's macOS Sequoia 15.6 Tuning](https://rolande.wordpress.com/2025/08/07/performance-tuning-the-network-stack-on-macos-sequoia-15-6/) - Current sysctl defaults
 - [RFC 7323](https://www.rfc-editor.org/rfc/rfc7323) - TCP Extensions for High Performance (supersedes RFC 1323)
 
-### Technical Standards
+### Technical standards
 - [NO_COLOR](https://no-color.org/) - Colour output disable standard
 - [sudo.ws Manual](https://www.sudo.ws/docs/man/1.8.31/sudoers.man/) - SUDO_UID documentation
 - [launchd.info](https://www.launchd.info/) - launchd tutorial and reference
 
-### Additional Research
+### Additional research
 See `docs/RESEARCH_FINDINGS.md` for service-by-service analysis with source citations.
 
 ## Contributing
@@ -570,7 +570,7 @@ This project is provided under the **MIT License**. See the [LICENSE](LICENSE) f
 
 **Summary:** You may use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of this software, provided you include the copyright notice and the "AS IS" warranty disclaimer. The software is provided without warranty, and the authors are not liable for any damages.
 
-## Legal Notice
+## Legal notice
 
 The disclaimers and limitations of liability contained in this document and the LICENSE file are provided for informational purposes and do not constitute legal advice. The enforceability of disclaimers varies by jurisdiction. If you have concerns about liability or legal compliance, consult with a qualified legal professional in your jurisdiction before using this software.
 
