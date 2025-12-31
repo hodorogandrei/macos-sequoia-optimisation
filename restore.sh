@@ -20,8 +20,8 @@ TIMESTAMP=$(date +%Y-%m-%d_%H%M%S)
 LOG_FILE="${LOG_DIR}/restore_${TIMESTAMP}.log"
 VERSION="1.1.0"
 
-# Current user ID
-CURRENT_UID=$(id -u)
+# Current user ID (use SUDO_UID if running under sudo, for GUI services)
+CURRENT_UID="${SUDO_UID:-$(id -u)}"
 
 # ============================================================================
 # COLOUR DEFINITIONS

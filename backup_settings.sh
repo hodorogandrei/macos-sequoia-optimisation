@@ -141,8 +141,8 @@ log_success "System information saved"
 # ============================================================================
 log_step "Backing up launchctl service states..."
 
-# Get current UID
-CURRENT_UID=$(id -u)
+# Get current UID (use SUDO_UID if running under sudo, for GUI services)
+CURRENT_UID="${SUDO_UID:-$(id -u)}"
 
 {
     echo "# launchctl disabled services state"

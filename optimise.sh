@@ -31,8 +31,8 @@ LOG_FILE="${LOG_DIR}/optimisation_${TIMESTAMP}.log"
 # Script version
 VERSION="1.1.0"
 
-# Current user ID
-CURRENT_UID=$(id -u)
+# Current user ID (use SUDO_UID if running under sudo, for GUI services)
+CURRENT_UID="${SUDO_UID:-$(id -u)}"
 
 # Valid categories for validation
 VALID_CATEGORIES="telemetry siri analysis consumer media sharing icloud backup bluetooth network power defaults spotlight"
@@ -300,7 +300,7 @@ execute() {
         return 0
     else
         if [[ -n "${description}" ]]; then
-            log_error "Failed: ${description}"
+            log_error "Command failed (${description})"
         fi
         return 1
     fi
