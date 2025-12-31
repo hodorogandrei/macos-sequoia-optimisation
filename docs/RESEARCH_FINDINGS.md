@@ -8,7 +8,7 @@
 
 ---
 
-## Table of Contents
+## Table of contents
 1. [System Audit Summary](#system-audit-summary)
 2. [Service Categorisation](#service-categorisation)
 3. [Critical Services - DO NOT DISABLE](#critical-services---do-not-disable)
@@ -16,9 +16,9 @@
 
 ---
 
-## System Audit Summary
+## System audit summary
 
-### Current Configuration (Already Optimised)
+### Current configuration (already optimised)
 | Setting | Current Value | Status |
 |---------|---------------|--------|
 | Server Performance Mode | `serverperfmode=1` | Already enabled |
@@ -33,7 +33,7 @@
 | kern.maxprocperuid | 15000 | Already tuned |
 | kern.ipc.somaxconn | 2048 | Already tuned |
 
-### Areas Requiring Optimisation
+### Areas requiring optimisation
 | Area | Current State | Recommendation |
 |------|---------------|----------------|
 | Power Nap | Enabled (powernap=1) | Should be disabled for server |
@@ -45,9 +45,9 @@
 
 ---
 
-## Service Categorisation
+## Service categorisation
 
-### Category 1: TELEMETRY/PRIVACY (Safe to Disable)
+### Category 1: Telemetry/privacy (safe to disable)
 
 | Service | LaunchDaemon/Agent | Risk Level | Notes | Sources |
 |---------|-------------------|------------|-------|---------|
@@ -61,7 +61,7 @@
 | symptomsd | com.apple.symptomsd | 2/5 | Network diagnostics collection | Research indicates safe |
 | dprivacyd | com.apple.dprivacyd | 1/5 | Differential privacy daemon | [Privacy Guides](https://www.privacyguides.org/en/os/macos-overview/) |
 
-### Category 2: BACKGROUND ANALYSIS (Safe to Disable for Servers)
+### Category 2: Background analysis (safe to disable for servers)
 
 | Service | LaunchDaemon/Agent | Risk Level | Notes | Sources |
 |---------|-------------------|------------|-------|---------|
@@ -74,7 +74,7 @@
 | suggestd | com.apple.suggestd | 1/5 | Suggestion daemon for Siri/Spotlight | Research indicates safe |
 | proactived | com.apple.proactived | 1/5 | Proactive suggestions | Research indicates safe |
 
-### Category 3: SIRI/ASSISTANT SERVICES (Safe to Disable)
+### Category 3: Siri/assistant services (safe to disable)
 
 | Service | LaunchDaemon/Agent | Risk Level | Notes | Sources |
 |---------|-------------------|------------|-------|---------|
@@ -88,7 +88,7 @@
 | siriinferenced | com.apple.siriinferenced | 1/5 | Siri inference engine | Research indicates safe |
 | siriactionsd | com.apple.siriactionsd | 1/5 | Siri actions | Research indicates safe |
 
-### Category 4: CONSUMER FEATURES (Safe to Disable for Servers)
+### Category 4: Consumer features (safe to disable for servers)
 
 | Service | LaunchDaemon/Agent | Risk Level | Notes | Sources |
 |---------|-------------------|------------|-------|---------|
@@ -111,7 +111,7 @@
 | itunescloudd | com.apple.itunescloudd | 1/5 | iTunes cloud sync | Common knowledge |
 | mediastream.mstreamd | com.apple.mediastream.mstreamd | 1/5 | Photo stream | Common knowledge |
 
-### Category 5: iCLOUD SERVICES (Conditional - Disable if not using)
+### Category 5: iCloud services (conditional - disable if not using)
 
 | Service | LaunchDaemon/Agent | Risk Level | Notes | Sources |
 |---------|-------------------|------------|-------|---------|
@@ -121,7 +121,7 @@
 | cloudpaird | com.apple.cloudpaird | 1/5 | Cloud pairing | Common knowledge |
 | cloudphotod | com.apple.cloudphotod | 1/5 | iCloud Photos | Common knowledge |
 
-### Category 6: BACKUP SERVICES (Can disable if using external backup)
+### Category 6: Backup services (can disable if using external backup)
 
 | Service | LaunchDaemon/Agent | Risk Level | Notes | Sources |
 |---------|-------------------|------------|-------|---------|
@@ -130,7 +130,7 @@
 
 ---
 
-## Critical Services - DO NOT DISABLE
+## Critical services - DO NOT DISABLE
 
 | Service | Reason | Source |
 |---------|--------|--------|
@@ -154,9 +154,9 @@
 
 ---
 
-## Research Sources
+## Research sources
 
-### Primary Sources Consulted
+### Primary sources consulted
 1. **Privacy & Telemetry:**
    - [IntelTechniques Blog - Minimizing macOS Telemetry](https://inteltechniques.com/blog/2021/08/03/minimizing-macos-telemetry/)
    - [Privacy Guides - macOS Overview](https://www.privacyguides.org/en/os/macos-overview/)
@@ -199,7 +199,7 @@
 
 ---
 
-## Notes on Research Methodology
+## Notes on research methodology
 
 1. Each service was researched against multiple sources
 2. When sources conflicted, the more conservative option was chosen
