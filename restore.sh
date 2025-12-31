@@ -18,6 +18,7 @@ BACKUP_DIR="${SCRIPT_DIR}/backups"
 LOG_DIR="${SCRIPT_DIR}/logs"
 TIMESTAMP=$(date +%Y-%m-%d_%H%M%S)
 LOG_FILE="${LOG_DIR}/restore_${TIMESTAMP}.log"
+VERSION="1.1.0"
 
 # Current user ID
 CURRENT_UID=$(id -u)
@@ -25,14 +26,32 @@ CURRENT_UID=$(id -u)
 # ============================================================================
 # COLOUR DEFINITIONS
 # ============================================================================
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-MAGENTA='\033[0;35m'
-BOLD='\033[1m'
-NC='\033[0m' # No Colour
+# Detect if stdout is a terminal and colours should be used
+# Respects NO_COLOR environment variable (https://no-color.org/)
+setup_colours() {
+    if [[ -t 1 ]] && [[ -z "${NO_COLOR:-}" ]] && [[ "${USE_COLOR:-auto}" != "never" ]]; then
+        RED='\033[0;31m'
+        GREEN='\033[0;32m'
+        YELLOW='\033[1;33m'
+        BLUE='\033[0;34m'
+        CYAN='\033[0;36m'
+        MAGENTA='\033[0;35m'
+        BOLD='\033[1m'
+        NC='\033[0m'
+    else
+        RED=''
+        GREEN=''
+        YELLOW=''
+        BLUE=''
+        CYAN=''
+        MAGENTA=''
+        BOLD=''
+        NC=''
+    fi
+}
+
+USE_COLOR="auto"
+setup_colours
 
 # ============================================================================
 # DEFAULT OPTIONS
@@ -174,6 +193,15 @@ parse_arguments() {
                 list_backups
                 exit 0
                 ;;
+            --no-color|--no-colour)
+                USE_COLOR="never"
+                setup_colours
+                shift
+                ;;
+            --version|-V)
+                echo "macOS Server Optimisation - Restore Utility v${VERSION}"
+                exit 0
+                ;;
             --help|-h)
                 show_help
                 exit 0
@@ -191,22 +219,24 @@ parse_arguments() {
 }
 
 show_help() {
-    cat << 'EOF'
-macOS Server Optimisation - Restore Utility
+    cat << EOF
+macOS Server Optimisation - Restore Utility v${VERSION}
 
 Usage: ./restore.sh <backup-timestamp> [OPTIONS]
 
 Restores system settings from a backup created before optimisation.
 
 ARGUMENTS:
-  backup-timestamp    The timestamp of the backup to restore (e.g., 2025-12-31_143022)
+  backup-timestamp       The timestamp of the backup to restore (e.g., 2025-12-31_143022)
 
 OPTIONS:
-  --dry-run           Preview restore without applying changes
-  --verbose           Show detailed output
-  --yes, -y           Skip confirmation prompts
-  --list              List available backups
-  --help, -h          Show this help message
+  --dry-run              Preview restore without applying changes
+  --verbose              Show detailed output
+  --yes, -y              Skip confirmation prompts
+  --list                 List available backups
+  --no-color, --no-colour  Disable coloured output
+  --version, -V          Show version number
+  --help, -h             Show this help message
 
 EXAMPLES:
   # List available backups
@@ -221,8 +251,12 @@ EXAMPLES:
   # Restore with verbose output, no prompts
   ./restore.sh 2025-12-31_143022 --verbose --yes
 
+ENVIRONMENT:
+  NO_COLOR               Set to disable colours
+
 EOF
 }
+
 
 list_backups() {
     print_header "Available Backups"
@@ -323,6 +357,7 @@ restore_launchctl() {
     if [[ -f "${services_file}" ]]; then
         log_step "Re-enabling services from configuration..."
 
+        local services_count=0
         while IFS='|' read -r domain service category description; do
             # Skip comments and empty lines
             [[ "${domain}" =~ ^#.*$ || -z "${domain}" ]] && continue
@@ -346,9 +381,14 @@ restore_launchctl() {
             if [[ -n "${enable_cmd}" ]]; then
                 log_info "Re-enabling: ${service}"
                 execute "${enable_cmd}" "Re-enabled ${service}" || true
+                ((services_count++)) || true
             fi
 
         done < "${services_file}"
+        log_verbose "Re-enabled ${services_count} services from configuration"
+    else
+        log_warning "Services configuration not found: ${services_file}"
+        log_warning "Unable to re-enable services - only restoring from backup state"
     fi
 
     # Now restore the original disabled state from the backup
