@@ -29,22 +29,47 @@ TIMESTAMP=$(date +%Y-%m-%d_%H%M%S)
 LOG_FILE="${LOG_DIR}/optimisation_${TIMESTAMP}.log"
 
 # Script version
-VERSION="1.0.0"
+VERSION="1.1.0"
 
 # Current user ID
 CURRENT_UID=$(id -u)
 
+# Valid categories for validation
+VALID_CATEGORIES="telemetry siri analysis consumer media sharing icloud backup bluetooth network power defaults spotlight"
+
+# Lock file for preventing concurrent runs
+LOCK_FILE="/tmp/macos-optimise.lock"
+
 # ============================================================================
 # COLOUR DEFINITIONS
 # ============================================================================
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-MAGENTA='\033[0;35m'
-BOLD='\033[1m'
-NC='\033[0m' # No Colour
+# Detect if stdout is a terminal and colours should be used
+# Respects NO_COLOR environment variable (https://no-color.org/)
+setup_colours() {
+    if [[ -t 1 ]] && [[ -z "${NO_COLOR:-}" ]] && [[ "${USE_COLOR:-auto}" != "never" ]]; then
+        RED='\033[0;31m'
+        GREEN='\033[0;32m'
+        YELLOW='\033[1;33m'
+        BLUE='\033[0;34m'
+        CYAN='\033[0;36m'
+        MAGENTA='\033[0;35m'
+        BOLD='\033[1m'
+        NC='\033[0m'
+    else
+        RED=''
+        GREEN=''
+        YELLOW=''
+        BLUE=''
+        CYAN=''
+        MAGENTA=''
+        BOLD=''
+        NC=''
+    fi
+}
+
+# Initial colour setup (may be overridden by --no-color)
+USE_COLOR="auto"
+setup_colours
 
 # ============================================================================
 # DEFAULT OPTIONS
@@ -54,6 +79,7 @@ VERBOSE=false
 YES_MODE=false
 SKIP_BACKUP=false
 SELECTED_CATEGORIES=""
+CUSTOM_CONFIG_DIR=""
 
 # Conditional service decisions (will be prompted if not using --yes)
 DISABLE_ICLOUD=""
@@ -125,6 +151,97 @@ print_section() {
     echo ""
     echo -e "${CYAN}--- $1 ---${NC}"
     echo ""
+}
+
+# Strip inline comments from config values
+strip_inline_comment() {
+    local value="$1"
+    # Remove inline comments (anything after # preceded by whitespace)
+    echo "${value%%#*}" | xargs
+}
+
+# Validate that a category name is valid
+validate_categories() {
+    local categories="$1"
+    local invalid_found=false
+
+    IFS=',' read -ra cat_array <<< "${categories}"
+    for cat in "${cat_array[@]}"; do
+        cat=$(echo "${cat}" | xargs)
+        local found=false
+        for valid in ${VALID_CATEGORIES}; do
+            if [[ "${cat}" == "${valid}" ]]; then
+                found=true
+                break
+            fi
+        done
+        if [[ "${found}" == "false" ]]; then
+            log_warning "Unknown category: '${cat}'"
+            log_warning "Valid categories: ${VALID_CATEGORIES}"
+            invalid_found=true
+        fi
+    done
+
+    if [[ "${invalid_found}" == "true" ]]; then
+        return 1
+    fi
+    return 0
+}
+
+# Check if a service exists in the specified domain
+service_exists() {
+    local domain="$1"
+    local service="$2"
+    local domain_path
+
+    case "${domain}" in
+        system)
+            domain_path="system/${service}"
+            ;;
+        user)
+            domain_path="user/${CURRENT_UID}/${service}"
+            ;;
+        gui)
+            domain_path="gui/${CURRENT_UID}/${service}"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    # launchctl print returns 0 if service exists, non-zero otherwise
+    if [[ "${domain}" == "system" ]]; then
+        sudo launchctl print "${domain_path}" &>/dev/null
+    else
+        launchctl print "${domain_path}" &>/dev/null
+    fi
+}
+
+# Acquire lock to prevent concurrent runs
+acquire_lock() {
+    if [[ -f "${LOCK_FILE}" ]]; then
+        local lock_pid
+        lock_pid=$(cat "${LOCK_FILE}" 2>/dev/null || echo "")
+        if [[ -n "${lock_pid}" ]] && kill -0 "${lock_pid}" 2>/dev/null; then
+            log_error "Another instance is running (PID: ${lock_pid})"
+            log_error "If this is incorrect, remove ${LOCK_FILE}"
+            exit 1
+        else
+            log_warning "Stale lock file found, removing..."
+            rm -f "${LOCK_FILE}"
+        fi
+    fi
+    echo $$ > "${LOCK_FILE}"
+}
+
+# Release lock
+release_lock() {
+    rm -f "${LOCK_FILE}" 2>/dev/null || true
+}
+
+# Cleanup on exit
+cleanup() {
+    release_lock
 }
 
 # Ask yes/no question
@@ -215,6 +332,19 @@ parse_arguments() {
                 SELECTED_CATEGORIES="${1#*=}"
                 shift
                 ;;
+            --config-dir=*)
+                CUSTOM_CONFIG_DIR="${1#*=}"
+                shift
+                ;;
+            --no-color|--no-colour)
+                USE_COLOR="never"
+                setup_colours
+                shift
+                ;;
+            --version|-V)
+                echo "macOS Server Optimisation Script v${VERSION}"
+                exit 0
+                ;;
             --help|-h)
                 show_help
                 exit 0
@@ -226,11 +356,30 @@ parse_arguments() {
                 ;;
         esac
     done
+
+    # Apply custom config directory if specified
+    if [[ -n "${CUSTOM_CONFIG_DIR}" ]]; then
+        if [[ -d "${CUSTOM_CONFIG_DIR}" ]]; then
+            CONFIG_DIR="${CUSTOM_CONFIG_DIR}"
+            log_verbose "Using custom config directory: ${CONFIG_DIR}"
+        else
+            log_error "Config directory does not exist: ${CUSTOM_CONFIG_DIR}"
+            exit 1
+        fi
+    fi
+
+    # Validate categories if specified
+    if [[ -n "${SELECTED_CATEGORIES}" ]]; then
+        if ! validate_categories "${SELECTED_CATEGORIES}"; then
+            log_error "Invalid category specified. Aborting."
+            exit 1
+        fi
+    fi
 }
 
 show_help() {
-    cat << 'EOF'
-macOS Server Optimisation Script v1.0.0
+    cat << EOF
+macOS Server Optimisation Script v${VERSION}
 
 Usage: ./optimise.sh [OPTIONS]
 
@@ -239,12 +388,15 @@ disabling unnecessary consumer services, tuning the network stack, and
 configuring power management for 24/7 operation.
 
 OPTIONS:
-  --dry-run           Preview all changes without applying them
-  --verbose           Show detailed output including all commands
-  --yes, -y           Skip confirmation prompts (conditional services still prompt)
-  --skip-backup       Skip creating backup before changes (not recommended)
-  --category=LIST     Apply only specific categories (comma-separated)
-  --help, -h          Show this help message
+  --dry-run              Preview all changes without applying them
+  --verbose              Show detailed output including all commands
+  --yes, -y              Skip confirmation prompts (conditional services still prompt)
+  --skip-backup          Skip creating backup before changes (not recommended)
+  --category=LIST        Apply only specific categories (comma-separated)
+  --config-dir=PATH      Use custom configuration directory
+  --no-color, --no-colour  Disable coloured output (auto-detected for pipes)
+  --version, -V          Show version number
+  --help, -h             Show this help message
 
 CATEGORIES:
   telemetry    Analytics and diagnostic services (always safe)
@@ -273,6 +425,12 @@ EXAMPLES:
 
   # Full optimisation with backup
   ./optimise.sh --verbose
+
+  # Use custom config and no colours (CI-friendly)
+  ./optimise.sh --config-dir=/etc/server-opt --no-color --yes
+
+ENVIRONMENT:
+  NO_COLOR               Set to disable colours (standard: https://no-color.org/)
 
 SAFETY:
   - All changes are reversible using ./restore.sh
@@ -512,6 +670,13 @@ disable_services() {
                 ;;
         esac
 
+        # Verify service exists before trying to disable (verbose mode only logs)
+        if [[ "${VERBOSE}" == "true" ]]; then
+            if ! service_exists "${domain}" "${service}"; then
+                log_verbose "Service not found (may not be installed): ${service}"
+            fi
+        fi
+
         # Build the launchctl command based on domain
         local disable_cmd=""
         local bootout_cmd=""
@@ -600,10 +765,33 @@ apply_sysctl_settings() {
         # The settings need to be applied at boot via LaunchDaemon
         local sysctl_plist="/Library/LaunchDaemons/com.server.sysctl.plist"
 
-        if [[ ! -f "${sysctl_plist}" ]]; then
-            log_info "Creating sysctl LaunchDaemon for persistent settings"
+        # Build sysctl command dynamically from config file
+        local sysctl_args=""
+        while IFS='=' read -r param value; do
+            # Skip comments and empty lines
+            [[ "${param}" =~ ^#.*$ || -z "${param}" ]] && continue
 
-            sudo tee "${sysctl_plist}" > /dev/null << 'PLIST_EOF'
+            # Trim whitespace and strip inline comments
+            param=$(echo "${param}" | xargs)
+            value=$(strip_inline_comment "${value}")
+
+            # Skip if empty
+            [[ -z "${param}" || -z "${value}" ]] && continue
+
+            sysctl_args="${sysctl_args} ${param}=${value}"
+        done < "${sysctl_file}"
+
+        # Remove leading space
+        sysctl_args="${sysctl_args# }"
+
+        if [[ -z "${sysctl_args}" ]]; then
+            log_warning "No sysctl settings found in config"
+        else
+            log_info "Creating sysctl LaunchDaemon for persistent settings"
+            log_verbose "sysctl args: ${sysctl_args}"
+
+            # Create plist with dynamically generated sysctl command
+            sudo tee "${sysctl_plist}" > /dev/null << PLIST_EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -612,9 +800,9 @@ apply_sysctl_settings() {
     <string>com.server.sysctl</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/bin/sh</string>
-        <string>-c</string>
-        <string>/usr/sbin/sysctl -w net.inet.tcp.mssdflt=1460 net.inet.tcp.win_scale_factor=8 net.inet.tcp.sendspace=1048576 net.inet.tcp.recvspace=1048576 net.inet.tcp.autorcvbufmax=33554432 net.inet.tcp.autosndbufmax=33554432 net.inet.tcp.delayed_ack=0 net.inet.tcp.sack=1 net.inet.tcp.always_keepalive=1 net.inet.tcp.slowstart_flightsize=20 net.inet.tcp.local_slowstart_flightsize=20 net.inet.tcp.msl=5000 net.inet.tcp.blackhole=2 net.inet.udp.blackhole=1 kern.ipc.maxsockbuf=16777216</string>
+        <string>/usr/sbin/sysctl</string>
+        <string>-w</string>
+$(for arg in ${sysctl_args}; do echo "        <string>${arg}</string>"; done)
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -624,12 +812,14 @@ PLIST_EOF
 
             sudo chown root:wheel "${sysctl_plist}"
             sudo chmod 644 "${sysctl_plist}"
-            sudo launchctl load "${sysctl_plist}" 2>/dev/null || true
+
+            # Unload existing if present, then load
+            sudo launchctl bootout system/com.server.sysctl 2>/dev/null || true
+            sudo launchctl bootstrap system "${sysctl_plist}" 2>/dev/null || \
+                sudo launchctl load "${sysctl_plist}" 2>/dev/null || true
 
             log_success "Created persistent sysctl configuration"
             ((CHANGES_MADE++)) || true
-        else
-            log_verbose "sysctl LaunchDaemon already exists"
         fi
     fi
 }
@@ -667,26 +857,28 @@ apply_defaults_settings() {
         # Skip if essential fields are empty
         [[ -z "${domain}" || -z "${key}" || -z "${type}" ]] && continue
 
-        # Build the defaults command
+        # Build the defaults command (quote domain for paths with spaces)
         local defaults_cmd=""
+        local quoted_domain="'${domain}'"
+
         case "${type}" in
             bool)
-                defaults_cmd="defaults write ${domain} '${key}' -bool ${value}"
+                defaults_cmd="defaults write ${quoted_domain} '${key}' -bool ${value}"
                 ;;
             int)
-                defaults_cmd="defaults write ${domain} '${key}' -int ${value}"
+                defaults_cmd="defaults write ${quoted_domain} '${key}' -int ${value}"
                 ;;
             float)
-                defaults_cmd="defaults write ${domain} '${key}' -float ${value}"
+                defaults_cmd="defaults write ${quoted_domain} '${key}' -float ${value}"
                 ;;
             string)
-                defaults_cmd="defaults write ${domain} '${key}' -string '${value}'"
+                defaults_cmd="defaults write ${quoted_domain} '${key}' -string '${value}'"
                 ;;
             array)
                 if [[ "${value}" == "[]" ]]; then
-                    defaults_cmd="defaults write ${domain} '${key}' -array"
+                    defaults_cmd="defaults write ${quoted_domain} '${key}' -array"
                 else
-                    defaults_cmd="defaults write ${domain} '${key}' -array ${value}"
+                    defaults_cmd="defaults write ${quoted_domain} '${key}' -array ${value}"
                 fi
                 ;;
             *)
@@ -789,19 +981,27 @@ configure_spotlight() {
 # MAIN EXECUTION
 # ============================================================================
 main() {
+    # Set up trap for cleanup on exit
+    trap cleanup EXIT INT TERM
+
+    # Acquire lock to prevent concurrent runs
+    acquire_lock
+
     # Create directories
     mkdir -p "${LOG_DIR}" "${BACKUP_DIR}"
 
     # Initialise log file
     echo "# macOS Server Optimisation Log" > "${LOG_FILE}"
     echo "# Started: $(date)" >> "${LOG_FILE}"
+    echo "# Version: ${VERSION}" >> "${LOG_FILE}"
     echo "# Options: DRY_RUN=${DRY_RUN}, VERBOSE=${VERBOSE}, YES_MODE=${YES_MODE}" >> "${LOG_FILE}"
+    echo "# Config dir: ${CONFIG_DIR}" >> "${LOG_FILE}"
     echo "" >> "${LOG_FILE}"
 
     # Show banner
     echo ""
     echo -e "${BOLD}╔══════════════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BOLD}║             macOS Server Optimisation Script v${VERSION}                     ║${NC}"
+    printf "${BOLD}║             macOS Server Optimisation Script v%-26s║${NC}\n" "${VERSION}"
     echo -e "${BOLD}║                     For macOS Sequoia 15.7.3                             ║${NC}"
     echo -e "${BOLD}╚══════════════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
