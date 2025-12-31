@@ -164,14 +164,14 @@ CURRENT_UID=$(id -u)
     echo "# Format: DOMAIN|SERVICE|DISABLED"
     echo ""
 
-    # Parse system disabled
+    # Parse system disabled (|| true prevents grep exit code 1 from failing script)
     sudo launchctl print-disabled system 2>/dev/null | grep -E "^\t" | while read -r line; do
         service=$(echo "$line" | awk -F'"' '{print $2}')
         state=$(echo "$line" | grep -o "=> true\|=> false" | awk '{print $2}')
         if [[ -n "$service" && -n "$state" ]]; then
             echo "system|${service}|${state}"
         fi
-    done
+    done || true
 
     # Parse user disabled
     launchctl print-disabled user/${CURRENT_UID} 2>/dev/null | grep -E "^\t" | while read -r line; do
@@ -180,7 +180,7 @@ CURRENT_UID=$(id -u)
         if [[ -n "$service" && -n "$state" ]]; then
             echo "user|${service}|${state}"
         fi
-    done
+    done || true
 
     # Parse GUI disabled
     launchctl print-disabled gui/${CURRENT_UID} 2>/dev/null | grep -E "^\t" | while read -r line; do
@@ -189,7 +189,7 @@ CURRENT_UID=$(id -u)
         if [[ -n "$service" && -n "$state" ]]; then
             echo "gui|${service}|${state}"
         fi
-    done
+    done || true
 } > "${BACKUP_PATH}/launchctl_disabled.csv"
 
 log_success "launchctl state saved"
