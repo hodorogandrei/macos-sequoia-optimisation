@@ -1,0 +1,26 @@
+# Runtime data
+backups/
+logs/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Spotlight
+.Spotlight-V100
+.Trashes
+
+# Editor backup/swap files
+*~
+*.swp
+*.swo
+*.bak
+\#*\#
+.#*
+
+# IDE directories
+.idea/
+.vscode/
+*.sublime-workspace
