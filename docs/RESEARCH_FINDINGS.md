@@ -134,7 +134,7 @@
 
 | Service | Reason | Source |
 |---------|--------|--------|
-| **mDNSResponder** | Core networking - Bonjour/DNS resolution. Apple briefly removed it in Yosemite which caused 300+ bugs | [HowToGeek](https://www.howtogeek.com/338914/what-is-mdnsresponder-and-why-is-it-running-on-my-mac/), [Apple Community](https://discussions.apple.com/thread/1314540) |
+| **mDNSResponder** | Core networking - Bonjour/DNS resolution. Apple replaced it with `discoveryd` in Yosemite (Oct 2014); after months of Wi-Fi, DNS, and wake-from-sleep issues, Apple reverted to mDNSResponder in 10.10.4 (May 2015), reportedly closing ~300 bug reports | [MacRumors](https://www.macrumors.com/2015/05/26/apple-discoveryd-replaced-with-mdnsresponder/), [9to5Mac](https://9to5mac.com/2015/05/26/apple-drops-discoveryd-in-latest-os-x-beta-following-months-of-complaints-about-network-issues-with-yosemite/), [HowToGeek](https://www.howtogeek.com/338914/what-is-mdnsresponder-and-why-is-it-running-on-my-mac/) |
 | **configd** | DHCP, network configuration - system won't get IP address without it | [Apple Support](https://support.apple.com/en-gb/102685) |
 | **diskarbitrationd** | Disk mounting/unmounting - breaks all disk operations | System critical |
 | **securityd** | Security framework - breaks all authentication | System critical |
