@@ -3,17 +3,28 @@
 # macOS Server Optimisation Script
 # Transforms macOS Sequoia into a high-performance server environment
 #
+# Copyright (c) 2025 Andrei Hodorog
+# Licensed under the MIT License - see LICENSE file for details
+#
+# DISCLAIMER: THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+# USE AT YOUR OWN RISK. The authors are not liable for any damages arising from
+# the use of this software. This script modifies critical system settings and
+# may cause system instability, data loss, or security vulnerabilities.
+# See README.md for full disclaimer and terms of use.
+#
 # Usage: ./optimise.sh [OPTIONS]
 #
 # Options:
-#   --dry-run           Preview changes without applying them
-#   --verbose           Show detailed output
-#   --yes               Skip confirmation prompts (except conditional services)
-#   --category=LIST     Apply only specific categories (comma-separated)
-#                       Categories: telemetry,siri,analysis,consumer,media,sharing,
-#                                   icloud,backup,bluetooth,network,power,defaults,spotlight
-#   --skip-backup       Skip creating backup before changes
-#   --help              Show this help message
+#   --dry-run             Preview changes without applying them
+#   --verbose             Show detailed output
+#   --yes                 Skip confirmation prompts (except conditional services)
+#   --category=LIST       Apply only specific categories (comma-separated)
+#   --skip-backup         Skip creating backup before changes
+#   --accept-disclaimer   Accept legal disclaimer (required for non-interactive use)
+#   --help                Show this help message
+#
+# LEGAL: This software is provided "AS IS" without warranty. Use at your own risk.
+#        See README.md and LICENSE for full terms.
 #
 
 set -euo pipefail
@@ -80,6 +91,7 @@ YES_MODE=false
 SKIP_BACKUP=false
 SELECTED_CATEGORIES=""
 CUSTOM_CONFIG_DIR=""
+ACCEPT_DISCLAIMER=false
 
 # Conditional service decisions (will be prompted if not using --yes)
 DISABLE_ICLOUD=""
@@ -145,6 +157,117 @@ print_header() {
     echo -e "${BOLD} $1${NC}"
     echo -e "${BOLD}============================================================================${NC}"
     echo ""
+}
+
+# ============================================================================
+# LEGAL DISCLAIMER AND ACCEPTANCE
+# ============================================================================
+show_disclaimer() {
+    echo ""
+    echo -e "${RED}${BOLD}╔══════════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${RED}${BOLD}║                    ⚠️  IMPORTANT LEGAL DISCLAIMER ⚠️                      ║${NC}"
+    echo -e "${RED}${BOLD}╚══════════════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${RED}${BOLD}WARNING: THIS SOFTWARE MODIFIES CRITICAL macOS SYSTEM SETTINGS${NC}"
+    echo ""
+    echo -e "${RED}⚠️  WARRANTY DISCLAIMER:${NC}"
+    echo -e "${BOLD}THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR"
+    echo -e "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,"
+    echo -e "FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.${NC}"
+    echo ""
+    echo -e "${RED}⚠️  LIMITATION OF LIABILITY:${NC}"
+    echo -e "${BOLD}IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,"
+    echo -e "INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES INCLUDING BUT"
+    echo -e "NOT LIMITED TO: LOSS OF DATA, SYSTEM FAILURE, SECURITY VULNERABILITIES,${NC}"
+    echo -e "${BOLD}OR ANY OTHER DAMAGES ARISING FROM THE USE OF THIS SOFTWARE.${NC}"
+    echo ""
+    echo -e "${RED}⚠️  SPECIFIC RISKS - This software may cause:${NC}"
+    echo -e "   ${RED}•${NC} System instability, crashes, or failure to boot"
+    echo -e "   ${RED}•${NC} Data loss from failed operations"
+    echo -e "   ${RED}•${NC} Security vulnerabilities (SIP must be disabled)"
+    echo -e "   ${RED}•${NC} Application failures for apps depending on disabled services"
+    echo -e "   ${RED}•${NC} Network connectivity issues from TCP/IP modifications"
+    echo -e "   ${RED}•${NC} Voiding of Apple warranty or support eligibility"
+    echo ""
+    echo -e "${RED}⚠️  BY PROCEEDING, YOU ACKNOWLEDGE AND AGREE:${NC}"
+    echo -e "   ${YELLOW}1.${NC} You use this software entirely at your own risk"
+    echo -e "   ${YELLOW}2.${NC} You have backed up all critical data"
+    echo -e "   ${YELLOW}3.${NC} You understand the security implications of disabling SIP"
+    echo -e "   ${YELLOW}4.${NC} You accept sole responsibility for any damage or loss"
+    echo -e "   ${YELLOW}5.${NC} You indemnify the authors from any claims"
+    echo -e "   ${YELLOW}6.${NC} This software is NOT affiliated with Apple Inc."
+    echo ""
+    echo -e "${CYAN}📄 Full terms: ${BOLD}https://github.com/YOUR_USERNAME/macos-optimisation-script/blob/main/README.md${NC}"
+    echo -e "${CYAN}📄 License:    ${BOLD}https://github.com/YOUR_USERNAME/macos-optimisation-script/blob/main/LICENSE${NC}"
+    echo -e "${CYAN}📄 Local:      ${BOLD}${SCRIPT_DIR}/README.md${NC} and ${BOLD}${SCRIPT_DIR}/LICENSE${NC}"
+    echo ""
+    echo -e "${RED}${BOLD}════════════════════════════════════════════════════════════════════════════${NC}"
+}
+
+require_disclaimer_acceptance() {
+    # Skip if already accepted via command line flag
+    if [[ "${ACCEPT_DISCLAIMER}" == "true" ]]; then
+        log_info "Disclaimer accepted via --accept-disclaimer flag"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: Disclaimer accepted via command-line flag --accept-disclaimer" >> "${LOG_FILE}"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: Script version: ${VERSION}" >> "${LOG_FILE}"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: User: $(whoami) (UID: ${CURRENT_UID})" >> "${LOG_FILE}"
+        return 0
+    fi
+
+    # Check if running in non-interactive mode
+    if [[ ! -t 0 ]]; then
+        echo -e "${RED}${BOLD}ERROR: This script requires interactive disclaimer acceptance.${NC}"
+        echo -e "${RED}For non-interactive/automated use, you must explicitly accept the disclaimer:${NC}"
+        echo ""
+        echo -e "  ${CYAN}./optimise.sh --accept-disclaimer [other options]${NC}"
+        echo ""
+        echo -e "${YELLOW}By using --accept-disclaimer, you confirm that you have read and agree to${NC}"
+        echo -e "${YELLOW}all terms in README.md and LICENSE files.${NC}"
+        exit 1
+    fi
+
+    # Show the disclaimer
+    show_disclaimer
+
+    echo ""
+    echo -e "${YELLOW}${BOLD}To proceed, you must type exactly: ${NC}${GREEN}${BOLD}I AGREE${NC}"
+    echo -e "${YELLOW}(This confirms you have read and accept all terms above)${NC}"
+    echo ""
+
+    local max_attempts=3
+    local attempt=1
+
+    while [[ ${attempt} -le ${max_attempts} ]]; do
+        read -r -p "$(echo -e ${BOLD})Enter your acceptance: $(echo -e ${NC})" user_input
+
+        if [[ "${user_input}" == "I AGREE" ]]; then
+            echo ""
+            echo -e "${GREEN}${BOLD}✓ Disclaimer accepted.${NC}"
+            echo ""
+
+            # Log the acceptance for legal record-keeping
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: ========================================" >> "${LOG_FILE}"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: DISCLAIMER ACCEPTANCE RECORD" >> "${LOG_FILE}"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: User typed 'I AGREE' to accept terms" >> "${LOG_FILE}"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: Script version: ${VERSION}" >> "${LOG_FILE}"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: User: $(whoami) (UID: ${CURRENT_UID})" >> "${LOG_FILE}"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: Terminal: ${TERM:-unknown}" >> "${LOG_FILE}"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: Hostname: $(hostname)" >> "${LOG_FILE}"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: ========================================" >> "${LOG_FILE}"
+
+            return 0
+        else
+            echo -e "${RED}Invalid input. You must type exactly: I AGREE${NC}"
+            echo -e "${YELLOW}Attempts remaining: $((max_attempts - attempt))${NC}"
+            ((attempt++))
+        fi
+    done
+
+    echo ""
+    echo -e "${RED}${BOLD}Maximum attempts exceeded. Exiting.${NC}"
+    echo -e "${YELLOW}To use this software, you must accept the disclaimer by typing 'I AGREE'.${NC}"
+    echo -e "${YELLOW}Please review the terms in README.md and LICENSE before trying again.${NC}"
+    exit 1
 }
 
 print_section() {
@@ -341,6 +464,10 @@ parse_arguments() {
                 setup_colours
                 shift
                 ;;
+            --accept-disclaimer)
+                ACCEPT_DISCLAIMER=true
+                shift
+                ;;
             --version|-V)
                 echo "macOS Server Optimisation Script v${VERSION}"
                 exit 0
@@ -395,8 +522,14 @@ OPTIONS:
   --category=LIST        Apply only specific categories (comma-separated)
   --config-dir=PATH      Use custom configuration directory
   --no-color, --no-colour  Disable coloured output (auto-detected for pipes)
+  --accept-disclaimer    Accept legal disclaimer (required for non-interactive use)
   --version, -V          Show version number
   --help, -h             Show this help message
+
+⚠️  LEGAL DISCLAIMER:
+  This software is provided "AS IS" without warranty. Use at your own risk.
+  By using this software, you accept all terms in README.md and LICENSE.
+  See: ${SCRIPT_DIR}/README.md for full disclaimer.
 
 CATEGORIES:
   telemetry    Analytics and diagnostic services (always safe)
@@ -997,6 +1130,9 @@ main() {
     echo "# Options: DRY_RUN=${DRY_RUN}, VERBOSE=${VERBOSE}, YES_MODE=${YES_MODE}" >> "${LOG_FILE}"
     echo "# Config dir: ${CONFIG_DIR}" >> "${LOG_FILE}"
     echo "" >> "${LOG_FILE}"
+
+    # ⚠️ REQUIRE LEGAL DISCLAIMER ACCEPTANCE BEFORE PROCEEDING
+    require_disclaimer_acceptance
 
     # Show banner
     echo ""

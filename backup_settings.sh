@@ -3,6 +3,13 @@
 # macOS Server Optimisation - Backup Utility
 # Creates a timestamped backup of current system settings before optimisation
 #
+# Copyright (c) 2025 Andrei Hodorog
+# Licensed under the MIT License - see LICENSE file for details
+#
+# DISCLAIMER: THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+# USE AT YOUR OWN RISK. The authors are not liable for any damages arising from
+# the use of this software. See README.md for full disclaimer and terms of use.
+#
 # Usage: ./backup_settings.sh [OPTIONS]
 #
 
@@ -66,6 +73,20 @@ log_step() {
 }
 
 # ============================================================================
+# DISCLAIMER NOTICE
+# ============================================================================
+show_disclaimer_notice() {
+    echo ""
+    echo -e "${YELLOW}╔══════════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${YELLOW}║                         ⚠️  LEGAL NOTICE ⚠️                                ║${NC}"
+    echo -e "${YELLOW}╚══════════════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${YELLOW}This software is provided \"AS IS\" without warranty. Use at your own risk.${NC}"
+    echo -e "${YELLOW}By using this software, you accept all terms in README.md and LICENSE.${NC}"
+    echo -e "${CYAN}📄 See: ${SCRIPT_DIR}/README.md for full disclaimer.${NC}"
+    echo ""
+}
+
+# ============================================================================
 # PARSE ARGUMENTS
 # ============================================================================
 BACKUP_DIR="${DEFAULT_BACKUP_DIR}"
@@ -106,6 +127,9 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Show legal notice
+show_disclaimer_notice
 
 # Create backup directory
 BACKUP_PATH="${BACKUP_DIR}/${TIMESTAMP}"

@@ -3,6 +3,13 @@
 # macOS Server Optimisation - Restore Utility
 # Restores system settings from a backup created by backup_settings.sh
 #
+# Copyright (c) 2025 Andrei Hodorog
+# Licensed under the MIT License - see LICENSE file for details
+#
+# DISCLAIMER: THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+# USE AT YOUR OWN RISK. The authors are not liable for any damages arising from
+# the use of this software. See README.md for full disclaimer and terms of use.
+#
 # Usage: ./restore.sh <backup-timestamp> [OPTIONS]
 #
 # Example: ./restore.sh 2025-12-31_143022
@@ -60,6 +67,7 @@ DRY_RUN=false
 VERBOSE=false
 YES_MODE=false
 BACKUP_TIMESTAMP=""
+ACCEPT_DISCLAIMER=false
 
 # Counters
 CHANGES_MADE=0
@@ -119,6 +127,77 @@ print_header() {
     echo -e "${BOLD} $1${NC}"
     echo -e "${BOLD}============================================================================${NC}"
     echo ""
+}
+
+# ============================================================================
+# LEGAL DISCLAIMER AND ACCEPTANCE
+# ============================================================================
+show_disclaimer() {
+    echo ""
+    echo -e "${RED}${BOLD}╔══════════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${RED}${BOLD}║                    ⚠️  IMPORTANT LEGAL DISCLAIMER ⚠️                      ║${NC}"
+    echo -e "${RED}${BOLD}╚══════════════════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${RED}${BOLD}WARNING: THIS SCRIPT MODIFIES SYSTEM SETTINGS${NC}"
+    echo ""
+    echo -e "${RED}⚠️  WARRANTY DISCLAIMER:${NC}"
+    echo -e "${BOLD}THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND.${NC}"
+    echo ""
+    echo -e "${RED}⚠️  LIMITATION OF LIABILITY:${NC}"
+    echo -e "${BOLD}THE AUTHORS ARE NOT LIABLE FOR ANY DAMAGES ARISING FROM USE OF THIS SOFTWARE.${NC}"
+    echo ""
+    echo -e "${RED}⚠️  RISKS - Restoration may cause:${NC}"
+    echo -e "   ${RED}•${NC} System instability if backup is incomplete or corrupted"
+    echo -e "   ${RED}•${NC} Service failures if services have been updated since backup"
+    echo -e "   ${RED}•${NC} Configuration conflicts with current system state"
+    echo ""
+    echo -e "${CYAN}📄 Full terms: ${BOLD}${SCRIPT_DIR}/README.md${NC} and ${BOLD}${SCRIPT_DIR}/LICENSE${NC}"
+    echo -e "${RED}${BOLD}════════════════════════════════════════════════════════════════════════════${NC}"
+}
+
+require_disclaimer_acceptance() {
+    # Skip if already accepted via command line flag
+    if [[ "${ACCEPT_DISCLAIMER}" == "true" ]]; then
+        log_info "Disclaimer accepted via --accept-disclaimer flag"
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: Disclaimer accepted via --accept-disclaimer" >> "${LOG_FILE}"
+        return 0
+    fi
+
+    # Check if running in non-interactive mode
+    if [[ ! -t 0 ]]; then
+        echo -e "${RED}${BOLD}ERROR: This script requires interactive disclaimer acceptance.${NC}"
+        echo -e "${RED}For non-interactive use: ./restore.sh <backup> --accept-disclaimer${NC}"
+        exit 1
+    fi
+
+    # Show the disclaimer
+    show_disclaimer
+
+    echo ""
+    echo -e "${YELLOW}${BOLD}To proceed, type exactly: ${NC}${GREEN}${BOLD}I AGREE${NC}"
+    echo ""
+
+    local max_attempts=3
+    local attempt=1
+
+    while [[ ${attempt} -le ${max_attempts} ]]; do
+        read -r -p "$(echo -e ${BOLD})Enter your acceptance: $(echo -e ${NC})" user_input
+
+        if [[ "${user_input}" == "I AGREE" ]]; then
+            echo ""
+            echo -e "${GREEN}${BOLD}✓ Disclaimer accepted.${NC}"
+            echo ""
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: User typed 'I AGREE' to accept terms" >> "${LOG_FILE}"
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] LEGAL: User: $(whoami) (UID: ${CURRENT_UID})" >> "${LOG_FILE}"
+            return 0
+        else
+            echo -e "${RED}Invalid input. You must type exactly: I AGREE${NC}"
+            ((attempt++))
+        fi
+    done
+
+    echo -e "${RED}${BOLD}Maximum attempts exceeded. Exiting.${NC}"
+    exit 1
 }
 
 # Ask yes/no question
@@ -198,6 +277,10 @@ parse_arguments() {
                 setup_colours
                 shift
                 ;;
+            --accept-disclaimer)
+                ACCEPT_DISCLAIMER=true
+                shift
+                ;;
             --version|-V)
                 echo "macOS Server Optimisation - Restore Utility v${VERSION}"
                 exit 0
@@ -235,8 +318,13 @@ OPTIONS:
   --yes, -y              Skip confirmation prompts
   --list                 List available backups
   --no-color, --no-colour  Disable coloured output
+  --accept-disclaimer    Accept legal disclaimer (required for non-interactive use)
   --version, -V          Show version number
   --help, -h             Show this help message
+
+⚠️  LEGAL DISCLAIMER:
+  This software is provided "AS IS" without warranty. Use at your own risk.
+  See README.md and LICENSE for full terms.
 
 EXAMPLES:
   # List available backups
@@ -557,6 +645,9 @@ main() {
     echo "# Started: $(date)" >> "${LOG_FILE}"
     echo "# Restoring from: ${BACKUP_TIMESTAMP}" >> "${LOG_FILE}"
     echo "" >> "${LOG_FILE}"
+
+    # ⚠️ REQUIRE LEGAL DISCLAIMER ACCEPTANCE BEFORE PROCEEDING
+    require_disclaimer_acceptance
 
     # Show banner
     echo ""
