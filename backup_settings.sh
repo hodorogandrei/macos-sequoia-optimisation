@@ -3,7 +3,7 @@
 # macOS Server Optimisation - Backup Utility
 # Creates a timestamped backup of current system settings before optimisation
 #
-# Usage: ./backup_settings.sh [--output-dir /path/to/backups]
+# Usage: ./backup_settings.sh [OPTIONS]
 #
 
 set -euo pipefail
@@ -14,16 +14,33 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_BACKUP_DIR="${SCRIPT_DIR}/backups"
 TIMESTAMP=$(date +%Y-%m-%d_%H%M%S)
+VERSION="1.1.0"
 
 # ============================================================================
 # COLOUR DEFINITIONS
 # ============================================================================
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Colour
+# Detect if stdout is a terminal and colours should be used
+# Respects NO_COLOR environment variable (https://no-color.org/)
+setup_colours() {
+    if [[ -t 1 ]] && [[ -z "${NO_COLOR:-}" ]] && [[ "${USE_COLOR:-auto}" != "never" ]]; then
+        RED='\033[0;31m'
+        GREEN='\033[0;32m'
+        YELLOW='\033[1;33m'
+        BLUE='\033[0;34m'
+        CYAN='\033[0;36m'
+        NC='\033[0m'
+    else
+        RED=''
+        GREEN=''
+        YELLOW=''
+        BLUE=''
+        CYAN=''
+        NC=''
+    fi
+}
+
+USE_COLOR="auto"
+setup_colours
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -59,14 +76,28 @@ while [[ $# -gt 0 ]]; do
             BACKUP_DIR="$2"
             shift 2
             ;;
+        --no-color|--no-colour)
+            USE_COLOR="never"
+            setup_colours
+            shift
+            ;;
+        --version|-V)
+            echo "macOS Server Optimisation - Backup Utility v${VERSION}"
+            exit 0
+            ;;
         --help|-h)
-            echo "Usage: $0 [--output-dir /path/to/backups]"
+            echo "Usage: $0 [OPTIONS]"
             echo ""
             echo "Creates a timestamped backup of current system settings."
             echo ""
             echo "Options:"
-            echo "  --output-dir  Directory to store backups (default: ./backups)"
-            echo "  --help        Show this help message"
+            echo "  --output-dir PATH    Directory to store backups (default: ./backups)"
+            echo "  --no-color           Disable coloured output"
+            echo "  --version, -V        Show version number"
+            echo "  --help, -h           Show this help message"
+            echo ""
+            echo "Environment:"
+            echo "  NO_COLOR             Set to disable colours"
             exit 0
             ;;
         *)
@@ -239,13 +270,23 @@ log_step "Backing up power management settings..."
 } > "${BACKUP_PATH}/pmset_backup.txt"
 
 # Create restorable format
+# Handle pmset values that may contain spaces or additional info (e.g., "1 (charged)")
 {
     echo "# Restorable pmset values"
     pmset -g 2>/dev/null | grep -E "^\s+\w+" | while read -r line; do
+        # Remove leading whitespace
+        line=$(echo "$line" | sed 's/^[[:space:]]*//')
+        # Get the key (first word)
         key=$(echo "$line" | awk '{print $1}')
+        # Get the value (second word only - ignore parenthetical info)
+        # Values like "1 (charged)" should just use "1"
         value=$(echo "$line" | awk '{print $2}')
-        if [[ -n "$key" && -n "$value" ]]; then
-            echo "${key}=${value}"
+        # Skip if key or value is empty, or if it looks like a header
+        if [[ -n "$key" && -n "$value" && ! "$key" =~ ^[A-Z] ]]; then
+            # Only include numeric values or simple strings (not parenthetical)
+            if [[ "$value" =~ ^[0-9]+$ || "$value" =~ ^[a-z]+$ ]]; then
+                echo "${key}=${value}"
+            fi
         fi
     done
 } > "${BACKUP_PATH}/pmset_restore.conf"
@@ -342,7 +383,7 @@ log_step "Creating backup manifest..."
     echo "  \"hostname\": \"$(hostname)\","
     echo "  \"username\": \"$(whoami)\","
     echo "  \"uid\": \"$(id -u)\","
-    echo "  \"script_version\": \"1.0.0\","
+    echo "  \"script_version\": \"${VERSION}\","
     echo "  \"files\": ["
     echo "    \"system_info.txt\","
     echo "    \"launchctl_state.txt\","
