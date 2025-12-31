@@ -144,8 +144,8 @@ Code contributions should:
 
 ```bash
 # Fork and clone the repository
-git clone https://github.com/YOUR_USERNAME/macos-optimisation-script.git
-cd macos-optimisation-script
+git clone https://github.com/YOUR_USERNAME/macos-sequoia-optimisation.git
+cd macos-sequoia-optimisation
 
 # Create a feature branch
 git checkout -b feature/your-feature-name

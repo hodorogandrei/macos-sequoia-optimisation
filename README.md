@@ -2,10 +2,10 @@
 
 <div align="center">
 
-[![GitHub stars](https://img.shields.io/github/stars/hodorogandrei/macos-optimisation-script?style=for-the-badge&logo=github&color=gold)](../../stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/hodorogandrei/macos-optimisation-script?style=for-the-badge&logo=github&color=blue)](../../network/members)
-[![GitHub issues](https://img.shields.io/github/issues/hodorogandrei/macos-optimisation-script?style=for-the-badge&logo=github&color=red)](../../issues)
-[![GitHub license](https://img.shields.io/github/license/hodorogandrei/macos-optimisation-script?style=for-the-badge&color=green)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/hodorogandrei/macos-sequoia-optimisation?style=for-the-badge&logo=github&color=gold)](../../stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/hodorogandrei/macos-sequoia-optimisation?style=for-the-badge&logo=github&color=blue)](../../network/members)
+[![GitHub issues](https://img.shields.io/github/issues/hodorogandrei/macos-sequoia-optimisation?style=for-the-badge&logo=github&color=red)](../../issues)
+[![GitHub license](https://img.shields.io/github/license/hodorogandrei/macos-sequoia-optimisation?style=for-the-badge&color=green)](LICENSE)
 
 [![macOS](https://img.shields.io/badge/macOS-15.x_Sequoia-000000?style=for-the-badge&logo=apple&logoColor=white)](https://www.apple.com/macos/sequoia/)
 [![Bash](https://img.shields.io/badge/Bash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
@@ -620,7 +620,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
 <div align="center">
 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](CONTRIBUTING.md)
-[![Good First Issues](https://img.shields.io/github/issues/hodorogandrei/macos-optimisation-script/good%20first%20issue?style=for-the-badge&label=Good%20First%20Issues&color=7057ff)](../../issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+[![Good First Issues](https://img.shields.io/github/issues/hodorogandrei/macos-sequoia-optimisation/good%20first%20issue?style=for-the-badge&label=Good%20First%20Issues&color=7057ff)](../../issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
 </div>
 
@@ -642,7 +642,7 @@ If this project has been helpful to you, please consider:
 
 **Give us a star!** It helps others discover this project.
 
-[![Star this repo](https://img.shields.io/github/stars/hodorogandrei/macos-optimisation-script?style=social)](../../stargazers)
+[![Star this repo](https://img.shields.io/github/stars/hodorogandrei/macos-sequoia-optimisation?style=social)](../../stargazers)
 
 </div>
 
