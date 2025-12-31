@@ -14,8 +14,11 @@ This toolkit systematically disables consumer-oriented services, tunes the netwo
 - **Dry-run mode** for previewing changes
 - **Selective categories** for granular control
 - **Interactive prompts** for conditional decisions
-- **Colour-coded output** for easy status tracking
+- **Colour-coded output** for easy status tracking (auto-detects terminal)
 - **Comprehensive logging** for audit trails
+- **CI/automation friendly** with `--no-color` and `NO_COLOR` support
+- **Custom configuration** via `--config-dir` option
+- **Lock file protection** against concurrent execution
 
 ## System Requirements
 
@@ -140,18 +143,25 @@ Main optimisation script with full feature set.
 Usage: ./optimise.sh [OPTIONS]
 
 Options:
-  --dry-run           Preview changes without applying
-  --verbose           Show detailed output
-  --yes, -y           Skip confirmation prompts
-  --skip-backup       Skip backup (not recommended)
-  --category=LIST     Apply only specific categories
-  --help, -h          Show help message
+  --dry-run              Preview changes without applying
+  --verbose              Show detailed output
+  --yes, -y              Skip confirmation prompts
+  --skip-backup          Skip backup (not recommended)
+  --category=LIST        Apply only specific categories
+  --config-dir=PATH      Use custom configuration directory
+  --no-color             Disable coloured output (auto-detected for pipes)
+  --version, -V          Show version number
+  --help, -h             Show help message
+
+Environment:
+  NO_COLOR               Set to disable colours (https://no-color.org/)
 
 Examples:
   ./optimise.sh --dry-run              # Preview all changes
   ./optimise.sh --verbose              # Full optimisation with details
   ./optimise.sh --category=telemetry   # Only telemetry
   ./optimise.sh --yes --skip-backup    # Quick mode (for re-runs)
+  ./optimise.sh --no-color | tee log   # CI-friendly with log capture
 ```
 
 ### restore.sh
@@ -162,11 +172,16 @@ Restores system to a previous state from backup.
 Usage: ./restore.sh <backup-timestamp> [OPTIONS]
 
 Options:
-  --dry-run           Preview restoration
-  --verbose           Show detailed output
-  --yes, -y           Skip confirmation
-  --list              List available backups
-  --help, -h          Show help message
+  --dry-run              Preview restoration
+  --verbose              Show detailed output
+  --yes, -y              Skip confirmation
+  --list                 List available backups
+  --no-color             Disable coloured output
+  --version, -V          Show version number
+  --help, -h             Show help message
+
+Environment:
+  NO_COLOR               Set to disable colours
 
 Examples:
   ./restore.sh --list                          # List backups
@@ -326,6 +341,20 @@ sudo launchctl list | grep sysctl
 4. **Some Services Respawn**: A few services are designed to restart automatically
 
 ## Changelog
+
+### v1.1.0 (2025-12-31)
+- Added `--no-color` / `--no-colour` option with automatic terminal detection
+- Added `NO_COLOR` environment variable support (https://no-color.org/)
+- Added `--config-dir=PATH` option for custom configuration directories
+- Added `--version` / `-V` flag to all scripts
+- Added lock file mechanism to prevent concurrent script execution
+- Added category validation with warnings for unknown categories
+- Added service existence verification before disable/enable attempts
+- Fixed hardcoded sysctl LaunchDaemon - now dynamically generates from config
+- Fixed defaults command quoting for domains with spaces
+- Fixed pmset backup parsing for multi-word values
+- Fixed inline comment handling in configuration files
+- Improved restore.sh with warning when services.conf is missing
 
 ### v1.0.0 (2025-12-31)
 - Initial release
