@@ -564,6 +564,17 @@ Contributions are welcome, particularly:
 
 Please open an issue before submitting pull requests for significant changes.
 
+## Author
+
+**Andrei Hodorog** · Research Associate, Cardiff University
+
+[![Website](https://img.shields.io/badge/Website-andreihodorog.com-blue?style=flat-square&logo=google-chrome&logoColor=white)](https://www.andreihodorog.com)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-andreihodorog-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/andreihodorog)
+[![GitHub](https://img.shields.io/badge/GitHub-hodorogandrei-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/hodorogandrei)
+[![ORCID](https://img.shields.io/badge/ORCID-0000--0002--4701--5643-A6CE39?style=flat-square&logo=orcid&logoColor=white)](https://orcid.org/0000-0002-4701-5643)
+[![Google Scholar](https://img.shields.io/badge/Google_Scholar-Citations-4285F4?style=flat-square&logo=google-scholar&logoColor=white)](https://scholar.google.com/citations?user=p5OY3Z8AAAAJ)
+[![ResearchGate](https://img.shields.io/badge/ResearchGate-Profile-00CCBB?style=flat-square&logo=researchgate&logoColor=white)](https://www.researchgate.net/profile/Andrei-Hodorog)
+
 ## License
 
 This project is provided under the **MIT License**. See the [LICENSE](LICENSE) file for the complete license text and additional disclaimers.
